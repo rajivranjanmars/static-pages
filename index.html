@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Static Pages</title>
+    <meta
+      name="description"
+      content="A responsive directory of static app pages served from ui.r24.dev."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4efe5;
+        --paper: rgba(255, 252, 246, 0.8);
+        --panel: rgba(255, 255, 255, 0.74);
+        --panel-strong: rgba(255, 255, 255, 0.9);
+        --line: rgba(34, 30, 24, 0.1);
+        --text: #1c1a17;
+        --muted: #635a4c;
+        --accent: #d45c2f;
+        --accent-deep: #8f2d15;
+        --shadow: 0 20px 50px rgba(69, 41, 21, 0.14);
+        --radius-xl: 32px;
+        --radius-lg: 24px;
+        --radius-md: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "DM Sans", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(212, 92, 47, 0.22), transparent 30%),
+          radial-gradient(circle at top right, rgba(250, 207, 126, 0.45), transparent 32%),
+          linear-gradient(180deg, #f6f0e4 0%, #efe7da 46%, #efe9e1 100%);
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: auto;
+        width: 22rem;
+        height: 22rem;
+        border-radius: 999px;
+        filter: blur(18px);
+        pointer-events: none;
+        opacity: 0.55;
+      }
+
+      body::before {
+        right: -8rem;
+        bottom: 12vh;
+        background: rgba(55, 126, 255, 0.14);
+      }
+
+      body::after {
+        left: -6rem;
+        top: 18vh;
+        background: rgba(212, 92, 47, 0.15);
+      }
+
+      .shell {
+        position: relative;
+        width: min(1180px, calc(100% - 32px));
+        margin: 24px auto;
+        padding: clamp(24px, 4vw, 40px);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: var(--radius-xl);
+        background: var(--paper);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+        gap: 24px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .hero-meta {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--panel);
+        padding: clamp(20px, 3vw, 28px);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--accent-deep);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #e46c3e, #f1c16b);
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(2.3rem, 6vw, 5rem);
+        line-height: 0.95;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-copy p {
+        max-width: 60ch;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 1.04rem;
+        line-height: 1.65;
+      }
+
+      .hero-meta {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+      }
+
+      .meta-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta-value {
+        margin: 6px 0 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(1.4rem, 4vw, 2rem);
+        font-weight: 700;
+      }
+
+      .meta-note {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .section-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 28px 0 18px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(1.5rem, 3vw, 2.2rem);
+        letter-spacing: -0.04em;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        display: grid;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--panel-strong);
+        color: inherit;
+        text-decoration: none;
+        box-shadow: 0 12px 30px rgba(70, 43, 23, 0.08);
+        transition:
+          transform 180ms ease,
+          box-shadow 180ms ease,
+          border-color 180ms ease;
+      }
+
+      .card:hover,
+      .card:focus-visible {
+        transform: translateY(-4px);
+        border-color: rgba(212, 92, 47, 0.35);
+        box-shadow: 0 22px 42px rgba(70, 43, 23, 0.12);
+      }
+
+      .card:focus-visible {
+        outline: 3px solid rgba(212, 92, 47, 0.22);
+        outline-offset: 4px;
+      }
+
+      .card-media {
+        aspect-ratio: 16 / 9;
+        background: linear-gradient(135deg, rgba(212, 92, 47, 0.18), rgba(62, 116, 255, 0.2));
+      }
+
+      .card-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .card-body {
+        display: grid;
+        gap: 8px;
+        padding: 18px;
+      }
+
+      .card-title {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.35rem;
+        letter-spacing: -0.04em;
+      }
+
+      .card-url {
+        margin: 0;
+        color: var(--accent-deep);
+        font-weight: 700;
+      }
+
+      .card-caption {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .state {
+        padding: 28px;
+        border: 1px dashed rgba(28, 26, 23, 0.18);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.56);
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .state strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.1rem;
+      }
+
+      @media (max-width: 980px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
+        .shell {
+          width: min(100% - 20px, 100%);
+          margin: 10px auto;
+          padding: 16px;
+          border-radius: 24px;
+        }
+
+        .hero-copy,
+        .hero-meta,
+        .card {
+          border-radius: 20px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <span class="eyebrow">Static app hub</span>
+          <h1 id="page-title">ui.r24.dev</h1>
+          <p>
+            One domain, many self-contained static pages. Drop a folder with an
+            <code>index.html</code> into this repo, register it in
+            <code>apps.json</code>, and it becomes part of the directory.
+          </p>
+        </div>
+        <aside class="hero-meta" aria-label="Project summary">
+          <div>
+            <p class="meta-label">Repository</p>
+            <p class="meta-value">static-pages</p>
+          </div>
+          <div>
+            <p class="meta-label">Routing</p>
+            <p class="meta-note">
+              Top-level folders map directly to public paths like
+              <code>/chat</code>.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <section aria-labelledby="apps-heading">
+        <div class="section-head">
+          <div>
+            <h2 id="apps-heading">Published pages</h2>
+            <p>Registered from the manual JSON manifest in the repo root.</p>
+          </div>
+        </div>
+        <div id="app-grid" class="grid" aria-live="polite">
+          <div class="state">
+            <strong>Loading pages</strong>
+            The registry is being fetched.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      /**
+       * @typedef {Object} AppEntry
+       * @property {string} title
+       * @property {string} url
+       * @property {string} image
+       */
+
+      /**
+       * Render a message state into the application grid.
+       *
+       * @param {string} title - Short heading describing the current state.
+       * @param {string} message - Additional detail shown below the heading.
+       * @returns {void}
+       */
+      function renderState(title, message) {
+        const grid = document.getElementById("app-grid");
+        grid.className = "";
+        grid.innerHTML = `
+          <div class="state">
+            <strong>${title}</strong>
+            ${message}
+          </div>
+        `;
+      }
+
+      /**
+       * Validate a raw manifest entry before it is rendered.
+       *
+       * @param {unknown} entry - A value read from apps.json.
+       * @returns {entry is AppEntry}
+       */
+      function isValidEntry(entry) {
+        if (!entry || typeof entry !== "object") {
+          return false;
+        }
+
+        return (
+          typeof entry.title === "string" &&
+          entry.title.trim().length > 0 &&
+          typeof entry.url === "string" &&
+          entry.url.trim().length > 0 &&
+          typeof entry.image === "string" &&
+          entry.image.trim().length > 0
+        );
+      }
+
+      /**
+       * Build a navigable card element for one published app.
+       *
+       * @param {AppEntry} app - Validated manifest entry.
+       * @returns {HTMLAnchorElement}
+       */
+      function createAppCard(app) {
+        const anchor = document.createElement("a");
+        anchor.className = "card";
+        anchor.href = app.url;
+        anchor.innerHTML = `
+          <div class="card-media">
+            <img src="${app.image}" alt="${app.title} preview" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">${app.title}</h3>
+            <p class="card-url">${app.url}</p>
+            <p class="card-caption">Open the standalone page for ${app.title}.</p>
+          </div>
+        `;
+
+        const image = anchor.querySelector("img");
+        image.addEventListener("error", () => {
+          image.alt = `${app.title} preview unavailable`;
+          image.src =
+            "data:image/svg+xml;charset=UTF-8," +
+            encodeURIComponent(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675">
+                <defs>
+                  <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+                    <stop stop-color="#E46C3E" offset="0%"/>
+                    <stop stop-color="#F0C879" offset="50%"/>
+                    <stop stop-color="#4472D9" offset="100%"/>
+                  </linearGradient>
+                </defs>
+                <rect width="1200" height="675" fill="url(#g)"/>
+                <text x="60" y="340" fill="#fff9f0" font-family="Arial, sans-serif" font-size="88" font-weight="700">${app.title}</text>
+              </svg>`
+            );
+        });
+
+        return anchor;
+      }
+
+      /**
+       * Fetch the app registry and render cards into the page.
+       *
+       * @returns {Promise<void>}
+       */
+      async function loadApps() {
+        const grid = document.getElementById("app-grid");
+
+        try {
+          const response = await fetch("./apps.json", { cache: "no-store" });
+
+          if (!response.ok) {
+            throw new Error(`Manifest request failed with status ${response.status}.`);
+          }
+
+          /** @type {unknown} */
+          const payload = await response.json();
+
+          if (!Array.isArray(payload)) {
+            throw new Error("Manifest must be a JSON array.");
+          }
+
+          /** @type {AppEntry[]} */
+          const apps = payload.filter(isValidEntry);
+
+          if (apps.length === 0) {
+            renderState(
+              "No pages registered",
+              "Add entries to apps.json to publish cards on the hub."
+            );
+            return;
+          }
+
+          grid.className = "grid";
+          grid.innerHTML = "";
+          apps.forEach((app) => {
+            grid.appendChild(createAppCard(app));
+          });
+        } catch (error) {
+          console.error("Failed to load app registry.", error);
+          renderState(
+            "Unable to load registry",
+            "Check apps.json for valid JSON and required fields: title, url, and image."
+          );
+        }
+      }
+
+      loadApps();
+    </script>
+  </body>
+</html>

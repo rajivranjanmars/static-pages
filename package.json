@@ -1,0 +1,11 @@
+{
+  "name": "static-pages",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static app hub for ui.r24.dev served with Cloudflare Workers Static Assets.",
+  "scripts": {
+    "dev": "npx --yes wrangler@latest dev",
+    "deploy:dry-run": "npx --yes wrangler@latest deploy --dry-run",
+    "deploy": "npx --yes wrangler@latest deploy"
+  }
+}

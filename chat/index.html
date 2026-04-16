@@ -1,0 +1,2457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LPU Buddy UI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ── Design Tokens ── */
+      :root {
+        --accent: #f7a400;
+        --accent-glow: rgba(247, 164, 0, 0.25);
+        --green: #18be71;
+        --bg: #ededed;
+        --canvas: #f3f4f6;
+        --card: #ffffff;
+        --soft: #f5f5f7;
+        --line: #dde0e8;
+        --text: #273245;
+        --muted: #8f98a8;
+        --bot: #f3f4f8;
+        --surface-shadow: 0 18px 32px rgba(15, 24, 40, 0.16);
+        --shell-shadow: 0 8px 22px rgba(16, 23, 34, 0.18);
+        --chip-bg: #f5e9be;
+        --tool-ico: #324052;
+        --bot-avatar-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+        --fs-section: 20px;
+        --fs-body: 13px;
+        --fs-meta: 10px;
+        --fs-micro: 11px;
+        --sp-2: 2px;
+        --sp-4: 4px;
+        --sp-6: 6px;
+        --sp-8: 8px;
+        --sp-10: 10px;
+        --sp-12: 12px;
+        --sp-14: 14px;
+        --sp-16: 16px;
+        --sp-18: 18px;
+        --sp-24: 24px;
+        --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .app.dark {
+        --canvas: #0d1b2a;
+        --card: #1a2744;
+        --soft: #223458;
+        --line: #2a3f67;
+        --text: #ffffff;
+        --muted: #9cabc4;
+        --bot: #1f3156;
+        --chip-bg: #2c3f67;
+        --surface-shadow: 0 18px 34px rgba(0, 0, 0, 0.3);
+        --shell-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+        --tool-ico: #d6def0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        font-family: "Poppins", sans-serif;
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      .stage {
+        display: grid;
+        gap: var(--sp-10);
+        justify-items: center;
+      }
+
+      .phone-shell {
+        width: 390px;
+        height: 644px;
+        border-radius: 40px;
+        background: var(--canvas);
+        box-shadow: var(--shell-shadow);
+        overflow: hidden;
+        position: relative;
+        isolation: isolate;
+      }
+
+      .app {
+        width: 390px;
+        height: 644px;
+        background: var(--canvas);
+        position: relative;
+        padding: var(--sp-18) var(--sp-24) 0;
+        color: var(--text);
+        overflow: hidden;
+      }
+
+      /* ── Screens & Transitions ── */
+      .screen {
+        position: absolute;
+        inset: 0;
+        padding: var(--sp-18) var(--sp-24) 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(1);
+        filter: blur(0);
+        overflow: hidden;
+        transition:
+          opacity 400ms var(--ease-out-expo),
+          transform 400ms var(--ease-out-expo),
+          filter 400ms var(--ease-out-expo),
+          visibility 0ms 400ms;
+      }
+
+      .screen.active {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
+        filter: blur(0);
+        transition:
+          opacity 400ms var(--ease-out-expo),
+          transform 400ms var(--ease-out-expo),
+          filter 400ms var(--ease-out-expo),
+          visibility 0ms 0ms;
+      }
+
+      #homeScreen.active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      #homeScreen.leaving {
+        transform: scale(0.96);
+        filter: blur(4px);
+        opacity: 0;
+      }
+
+      .home-fixed {
+        flex-shrink: 0;
+        background: var(--canvas);
+        z-index: 2;
+      }
+
+      .home-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: var(--sp-16);
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .home-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      #chatScreen {
+        transform: scale(1.03);
+      }
+
+      #chatScreen.active {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        transform: scale(1);
+      }
+
+      /* ── Search Overlay ── */
+      #searchOverlay {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        padding: var(--sp-24);
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 350ms var(--ease-out-expo),
+          visibility 0ms 350ms;
+      }
+
+      #searchOverlay.active {
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity 350ms var(--ease-out-expo),
+          visibility 0ms 0ms;
+      }
+
+      .search-backdrop {
+        position: absolute;
+        inset: 0;
+        background: var(--canvas);
+        opacity: 0.92;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+
+      .search-box {
+        position: relative;
+        z-index: 2;
+        margin-top: 80px;
+        background: var(--card);
+        border: 2px solid var(--accent);
+        border-radius: 20px;
+        padding: var(--sp-16) var(--sp-18);
+        box-shadow:
+          0 0 0 6px var(--accent-glow),
+          0 16px 40px rgba(0, 0, 0, 0.1);
+        transform: scale(0.92) translateY(-10px);
+        opacity: 0;
+        transition:
+          transform 400ms var(--ease-out-expo),
+          opacity 400ms var(--ease-out-expo);
+      }
+
+      #searchOverlay.active .search-box {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+
+      .search-box-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: var(--sp-10);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-8);
+      }
+
+      .search-box-label svg {
+        width: 18px;
+        height: 18px;
+        stroke: var(--accent);
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .search-input {
+        width: 100%;
+        min-height: 80px;
+        border: 1.5px solid var(--line);
+        border-radius: 14px;
+        background: var(--soft);
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 500;
+        font-family: "Poppins", sans-serif;
+        padding: var(--sp-12) var(--sp-16);
+        outline: none;
+        resize: none;
+        line-height: 1.4;
+        transition:
+          border-color 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .search-input::placeholder {
+        color: var(--muted);
+      }
+
+      .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .search-hint {
+        margin-top: var(--sp-10);
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+        text-align: center;
+      }
+
+      .search-hint kbd {
+        display: inline-block;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-family: "Poppins", sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      /* ── Playful AI section in search overlay ── */
+      .ai-vibes {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--sp-12);
+        padding-bottom: 40px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 500ms 200ms var(--ease-out-expo),
+          transform 500ms 200ms var(--ease-out-expo);
+      }
+
+      #searchOverlay.active .ai-vibes {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .ai-vibes-art {
+        display: flex;
+        gap: var(--sp-14);
+        align-items: flex-end;
+      }
+
+      @keyframes robotBounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      @keyframes robotWave {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        25% {
+          transform: rotate(12deg);
+        }
+        75% {
+          transform: rotate(-12deg);
+        }
+      }
+
+      .robot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: robotBounce 2s ease-in-out infinite;
+      }
+
+      .robot:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+
+      .robot:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      .robot svg {
+        width: 42px;
+        height: 42px;
+      }
+
+      .robot-label {
+        margin-top: var(--sp-4);
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .ai-vibes-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.5;
+      }
+
+      .ai-vibes-text span {
+        color: var(--accent);
+      }
+
+      .ai-vibes-funtext {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+        font-style: italic;
+        opacity: 0.7;
+      }
+
+      /* ── Gradient Header Bar ── */
+      @keyframes headerGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .header-bar {
+        margin: -18px -24px 0;
+        padding: var(--sp-14) var(--sp-18);
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        /* background: linear-gradient(
+          270deg,
+          #007bff, #6610f2, #6f42c1, #e83e8c,
+          #fd7e14, #ffc107, #28a745, #17a2b8, #007bff
+        ); */
+        background-size: 300% 100%;
+        animation: headerGradient 50s ease infinite;
+              border-bottom: 3px solid;
+
+          border-image: linear-gradient(
+          90deg,
+          #007bff, #6610f2, #e83e8c, #fd7e14,
+          #ffc107, #28a745, #17a2b8, #007bff
+        ) 1;
+        flex-shrink: 0;
+      }
+
+      .app.dark .header-bar {
+        background: linear-gradient(
+          90deg,
+          #1a1a2e 0%,
+          #16213e 30%,
+          #0f3460 60%,
+          #1a1a2e 100%
+        );
+        background-size: 200% 100%;
+        animation: headerGradient 40s ease infinite;
+        border-bottom: 3px solid;
+        border-image: linear-gradient(
+          90deg,
+          #007bff, #6610f2, #e83e8c, #fd7e14,
+          #ffc107, #28a745, #17a2b8, #007bff
+        ) 1;
+        border-image-slice: 1;
+      }
+
+
+      .header-bar .head-tools {
+        display: flex;
+        gap: 4px;
+      }
+
+      .header-bar .tool-btn {
+        color: #fff;
+        width: 18px;
+        height: 18px;
+        background: rgb(255, 0, 0);
+        border-radius: 50%;
+        opacity: 1;
+        border: none;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: transform 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      .header-bar .tool-btn:hover {
+        transform: scale(1.15);
+        opacity: 1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .header-bar .tool-btn:active {
+        transform: scale(0.9);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      /* MacOS traffic light colors - green, yellow, red */
+      #themeTool,
+      #themeToolChat {
+        background: #28C940;
+      }
+
+      .header-bar .tool-btn:nth-child(2),
+      .chat-top-right .tool-btn:nth-child(1) ~ .tool-btn:nth-child(2) {
+        background: #FFBD2E;
+      }
+
+      #contextTool,
+      #deleteTool {
+        background: #FF5F57;
+      }
+
+      .header-bar .tool-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      #bot_name {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-indicator {
+        width: 10px;
+        height: 10px;
+        background: #18be71;
+        border-radius: 50%;
+        display: inline-block;
+        flex-shrink: 0;
+        box-shadow: 0 0 4px rgba(24, 190, 113, 0.6);
+      }
+
+      /* ── Greeting Row ── */
+      .greeting-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-10);
+        padding: var(--sp-12) 0 var(--sp-8);
+        max-height: 60px;
+        overflow: hidden;
+        opacity: 1;
+        transition:
+          max-height 400ms var(--ease-out-expo),
+          opacity 300ms ease,
+          padding 400ms var(--ease-out-expo);
+      }
+
+      .greeting-row.collapsed {
+        max-height: 0;
+        opacity: 0;
+        padding: 0;
+        margin-top: var(--sp-10);
+      }
+
+      .recent-chats-heading {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--canvas);
+        padding-top: var(--sp-8);
+        padding-bottom: var(--sp-8);
+      }
+
+      .greeting-text {
+        flex: 1;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.2;
+      }
+
+      .greeting-text span {
+        color: var(--accent);
+      }
+
+      .avatar-ring {
+        width: 36px;
+        height: 36px;
+        border: 2px solid var(--accent);
+        border-radius: 50%;
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      /* ── Tool Buttons ── */
+      .tool-btn {
+        appearance: none;
+        -webkit-appearance: none;
+        position: relative;
+        border: 0;
+        background: transparent;
+        color: var(--tool-ico);
+        height: 16px;
+        width: 16px;
+        padding: 0;
+        border-radius: 50%;
+        opacity: 0.94;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: transform 150ms var(--ease-out-expo);
+      }
+
+      .tool-btn:active {
+        transform: scale(0.85);
+      }
+
+      .tool-btn svg {
+        width: 13px;
+        height: 13px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+      }
+
+      .tool-btn::after {
+        content: attr(data-tip);
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%) translateX(4px);
+        margin-right: 4px;
+        background: rgba(15, 23, 38, 0.94);
+        color: #f8fbff;
+        border-radius: 6px;
+        padding: var(--sp-4) 7px;
+        font:
+          500 var(--fs-meta)/1 "Poppins",
+          sans-serif;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 120ms ease,
+          transform 120ms ease;
+        z-index: 10;
+      }
+
+      .tool-btn:hover::after,
+      .tool-btn:focus-visible::after {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+      }
+
+      /* ── Search Bar (home screen) ── */
+      .search {
+        height: 38px;
+        border-radius: 20px;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-10);
+        padding: 0 var(--sp-16);
+        margin-bottom: 5px;
+        color: var(--muted);
+        font-size: var(--fs-body);
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          height 350ms var(--ease-out-expo),
+          border-radius 350ms var(--ease-out-expo),
+          border-color 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .search.expanded {
+        height: 50px;
+        border-radius: 14px;
+      }
+
+      .search:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .search svg {
+        width: 21px;
+        height: 21px;
+        stroke: var(--muted);
+        flex-shrink: 0;
+      }
+
+      .search-placeholder {
+        position: relative;
+        overflow: hidden;
+        height: 18px;
+        flex: 1;
+      }
+
+      .search-placeholder span {
+        display: block;
+        transition: opacity 500ms ease, transform 500ms ease;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .search-placeholder span.out {
+        opacity: 0;
+        transform: translateY(-100%);
+      }
+
+      .section-row {
+        margin-top: var(--sp-12);
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+
+      .section-row h2 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1;
+        font-weight: 700;
+      }
+
+      .section-row span {
+        color: var(--accent);
+        font-size: 14px;
+        line-height: 1;
+        font-weight: 600;
+      }
+
+      /* ── Quick Actions ── */
+      .quick-grid {
+        margin-top: var(--sp-8);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .quick {
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        min-height: 68px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        padding: var(--sp-6) var(--sp-4);
+        text-align: center;
+        transition:
+          transform 150ms var(--ease-out-expo),
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .quick:hover {
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px var(--accent-glow);
+      }
+
+      .quick:active {
+        transform: scale(0.95);
+      }
+
+      .quick:focus-visible,
+      .chat-item:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .quick svg {
+        width: 20px;
+        height: 20px;
+        margin-bottom: 3px;
+      }
+
+      .quick strong {
+        display: block;
+        font-size: 10px;
+        line-height: 1.1;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+      }
+
+      .quick small {
+        font-size: var(--fs-meta);
+        line-height: 1;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .app.dark .quick strong,
+      .app.dark .chat-item strong {
+        color: #f4f7ff;
+      }
+
+      .app.dark .quick small,
+      .app.dark .chat-item small,
+      .app.dark .chat-item time {
+        color: #b9c6dd;
+      }
+
+      .quick small.green {
+        color: var(--green);
+      }
+
+      /* ── Recent Chats ── */
+      .recent-list {
+        margin-top: var(--sp-12);
+        display: grid;
+        gap: var(--sp-12);
+      }
+
+      .chat-item {
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        min-height: 68px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 11px;
+        padding: var(--sp-12) var(--sp-14);
+        transition:
+          transform 150ms var(--ease-out-expo),
+          border-color 150ms ease;
+      }
+
+      .chat-item:hover {
+        border-color: var(--accent);
+      }
+
+      .chat-item:active {
+        transform: scale(0.97);
+      }
+
+      .ai-dot {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--chip-bg);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+      }
+
+      .ai-dot svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--accent);
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .chat-item strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.12;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 218px;
+      }
+
+      .chat-item small {
+        font-size: 10px;
+        line-height: 1.15;
+        color: var(--muted);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 218px;
+        display: block;
+      }
+
+      .chat-item time {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 500;
+        margin-top: 0;
+        align-self: start;
+      }
+
+      /* ── Chat Screen ── */
+      .chat-top {
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        padding: var(--sp-10) var(--sp-4);
+        gap: var(--sp-10);
+        background: var(--canvas);
+      }
+
+      .chat-top-right {
+        margin-left: auto;
+        display: flex;
+        gap: var(--sp-4);
+      }
+
+      .back {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: transform 150ms var(--ease-out-expo);
+      }
+
+      .back:active {
+        transform: scale(0.85);
+      }
+
+      .back svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .bot-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--bot-avatar-bg);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        flex-shrink: 0;
+      }
+
+      .bot-avatar svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .chat-title {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1;
+        font-weight: 700;
+      }
+
+      .online {
+        margin-top: var(--sp-2);
+        color: var(--green);
+        font-size: var(--fs-meta);
+        line-height: 1;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+      }
+
+      /* ── Thread ── */
+      .thread {
+        display: grid;
+        justify-items: start;
+        align-content: start;
+        gap: 10px;
+        min-height: 0;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: var(--sp-8) var(--sp-4) var(--sp-8) 0;
+      }
+
+      .thread::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+      }
+
+      @keyframes messageIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .msg-enter {
+        animation: messageIn 300ms var(--ease-out-expo) both;
+      }
+
+      .bubble {
+        max-width: 82%;
+        border-radius: 12px;
+        background: var(--bot);
+        color: var(--text);
+        padding: var(--sp-8) var(--sp-10);
+        font-size: 12px;
+        line-height: 1.3;
+        font-weight: 500;
+        border: 1px solid var(--line);
+      }
+
+      .bubble.user {
+        justify-self: end;
+        margin-left: auto;
+        display: inline-block;
+        width: auto;
+        max-width: 92%;
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+        border-radius: 20px;
+        text-align: left;
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: normal;
+      }
+
+      /* ── User message row with avatar ── */
+      .user-msg-row {
+        display: flex;
+        gap: var(--sp-6);
+        align-items: flex-end;
+        justify-self: end;
+        flex-direction: row-reverse;
+        margin-left: 36px;
+      }
+
+      .user-msg-row .bubble.user {
+        margin-left: 0;
+      }
+
+      .user-msg-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .bubble p {
+        margin: 0;
+      }
+
+      .stamp {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 500;
+      }
+
+      .bubble ol {
+        margin: var(--sp-4) 0 0 var(--sp-16);
+        padding: 0;
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 11px;
+        line-height: 1.3;
+      }
+
+      .links {
+        display: flex;
+        gap: 24px;
+        margin-top: var(--sp-8);
+        color: var(--muted);
+        font-size: var(--fs-meta);
+        font-weight: 600;
+      }
+
+      /* ── Suggested chips (inside thread, scrollable) ── */
+      .suggested-area {
+        padding: var(--sp-4) 0;
+      }
+
+      .suggested {
+        color: var(--muted);
+        font-size: var(--fs-micro);
+        line-height: 1;
+        font-weight: 500;
+      }
+
+      .chips {
+        margin-top: var(--sp-8);
+        display: flex;
+        gap: var(--sp-10);
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        flex: 0 0 auto;
+        width: max-content;
+        max-width: 100%;
+        border: 2px solid var(--accent);
+        border-radius: 999px;
+        color: var(--accent);
+        height: 33px;
+        padding: 0 var(--sp-14);
+        display: grid;
+        place-items: center;
+        font-size: var(--fs-meta);
+        line-height: 1;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          background 150ms ease,
+          color 150ms ease,
+          transform 150ms var(--ease-out-expo);
+      }
+
+      .chip:hover {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .chip:active {
+        transform: scale(0.94);
+      }
+
+      /* ── Typing Indicator ── */
+      @keyframes typingDot {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        30% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+
+      .typing-indicator {
+        display: flex;
+        gap: var(--sp-4);
+        padding: var(--sp-10) var(--sp-14);
+        background: var(--bot);
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        width: fit-content;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .typing-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        animation: typingDot 1.2s ease-in-out infinite;
+      }
+
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      /* ── Composer (sticky bottom) ── */
+      .composer-wrap {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-8);
+        padding: var(--sp-6) 0 var(--sp-10);
+        background: var(--canvas);
+        flex-shrink: 0;
+      }
+
+      .composer {
+        flex: 1;
+        height: 42px;
+        border-radius: 22px;
+        border: 1.5px solid var(--line);
+        background: var(--soft);
+        color: var(--text);
+        font-size: var(--fs-body);
+        line-height: 1;
+        font-weight: 500;
+        font-family: "Poppins", sans-serif;
+        padding: 0 var(--sp-16);
+        outline: none;
+        transition:
+          border-color 200ms ease,
+          box-shadow 200ms ease;
+      }
+
+      .composer::placeholder {
+        color: var(--muted);
+      }
+
+      .composer:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .send {
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f77f4d 0%, #f7a400 100%);
+        color: #fff;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition:
+          transform 150ms var(--ease-out-expo),
+          box-shadow 150ms ease,
+          filter 150ms ease;
+      }
+
+      .send:hover {
+        filter: brightness(1.06);
+        box-shadow: 0 6px 16px rgba(242, 138, 0, 0.35);
+      }
+
+      .send:active {
+        transform: scale(0.9);
+      }
+
+      .send:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .send svg {
+        width: 17px;
+        height: 17px;
+        fill: currentColor;
+        transform: translateX(0.5px);
+      }
+
+      /* ── Bot msg avatar (inline) ── */
+      .bot-msg-row {
+        display: flex;
+        gap: var(--sp-6);
+        align-items: flex-end;
+        margin-right: 28px;
+      }
+
+      .bot-msg-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--bot-avatar-bg);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .bot-msg-avatar svg {
+        width: 11px;
+        height: 11px;
+        fill: none;
+        stroke: #fff;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      @media (max-width: 430px) {
+        body {
+          place-items: start center;
+          padding-top: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    
+    <main class="stage">
+      <section class="phone-shell">
+        <div id="app" class="app">
+          <!-- ── Home Screen ── -->
+          <article id="homeScreen" class="screen active">
+            <div class="home-fixed">
+            <div class="header-bar">
+              <h1 id="bot_name">
+                <span style="color: #ef7d00;">LPU</span>Online <span style="font-size: 12px;color: #ef7d00;">Buddy</span>
+                <span class="status-indicator"></span>
+              </h1>
+              <div class="head-tools">
+                <button
+                  id="themeTool"
+                  class="tool-btn"
+                  type="button"
+                  aria-label="Toggle theme"
+                  data-tip="Theme"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                </button>
+                <button
+                  class="tool-btn"
+                  type="button"
+                  aria-label="View tutorial"
+                  data-tip="Help"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" />
+                    <path
+                      d="M9.8 9.2a2.4 2.4 0 0 1 4.2 1.6c0 1.6-1.7 2.1-2.1 2.8"
+                    />
+                    <path d="M12 16.8h.01" />
+                  </svg>
+                </button>
+                <button
+                  id="contextTool"
+                  class="tool-btn"
+                  type="button"
+                  aria-label="Close"
+                  data-tip="Close"
+                >
+                  <svg id="contextIcon" viewBox="0 0 23 23">
+                    <path d="M7 7l10 10M17 7L7 17" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="greeting-row">
+              <div class="greeting-text"><span id="greetingText">Good Morning</span>, Student!</div>
+              <div class="avatar-ring">JS</div>
+            </div>
+
+            <div
+              class="search"
+              id="searchBar"
+              role="button"
+              tabindex="0"
+              aria-label="Search - opens AI chat"
+            >
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="10.5" cy="10.5" r="6.75" stroke-width="2" />
+                <path
+                  d="M15.6 15.6L20 20"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div class="search-placeholder" id="searchPlaceholder">
+                <span>Ask me anything...</span>
+              </div>
+            </div>
+            </div>
+
+            <div class="home-scroll">
+            <div class="section-row">
+              <h2>Quick Actions</h2>
+            </div>
+
+            <section class="quick-grid">
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from My Courses"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h7v12H4z" fill="#9d89d9" />
+                  <path d="M13 6h7v12h-7z" fill="#cbc0ef" />
+                  <path d="M12 6v12" stroke="#fff" />
+                  <path
+                    d="M7 8h1M15 8h1"
+                    stroke="#f77f4d"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <strong>My Courses</strong><small>6 Active</small>
+              </button>
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from Attendance"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M9 4c0 2 1 3 3 3s3-1 3-3"
+                    stroke="#2c3d62"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M5 13c0 3 3 6 7 6s7-3 7-6"
+                    stroke="#2e3f65"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M12 8c-2 0-4 2-4 4 0 2 2 4 4 4s4-2 4-4c0-2-2-4-4-4z"
+                    fill="#7ed69b"
+                  />
+                </svg>
+                <strong>Attendance</strong><small>87% Overall</small>
+              </button>
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from Exams"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6 3h12v18H6z" fill="#b9d9f4" />
+                  <path d="M9 8h6" stroke="#7ba3c5" />
+                  <path d="M9 12h3" stroke="#7ba3c5" />
+                  <path
+                    d="M13 13h4M15 11v4"
+                    stroke="#ff5a37"
+                    stroke-width="2"
+                  />
+                </svg>
+                <strong>Exams</strong><small>Next: 15 Dec</small>
+              </button>
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from Results"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect
+                    x="5"
+                    y="3"
+                    width="14"
+                    height="18"
+                    rx="2"
+                    fill="#d0d7f2"
+                  />
+                  <path d="M9 8h6M9 12h6M9 16h4" stroke="#6a75a5" />
+                  <path
+                    d="M15.5 15l1.2 1.2 2.3-2.3"
+                    stroke="#eb4f54"
+                    stroke-width="2"
+                  />
+                </svg>
+                <strong>Results</strong><small>CGPA: 8.2</small>
+              </button>
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from Fee Status"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M5 10h14v9H5z" fill="#b8d9bf" />
+                  <path d="M12 5l7 3H5l7-3z" fill="#58a66d" />
+                  <path d="M12 12c2 0 3-2 3-4h-6c0 2 1 4 3 4z" fill="#2d874c" />
+                  <path d="M8 12h8v7H8z" fill="#8dc89a" />
+                </svg>
+                <strong>Fee Status</strong><small class="green">Paid</small>
+              </button>
+              <button
+                class="quick action-trigger"
+                type="button"
+                aria-label="Open chat from Campus"
+              >
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M3 9h18" stroke="#8f7f77" />
+                  <path d="M4 9l8-5 8 5v10H4z" fill="#c8b7ad" />
+                  <path d="M7 12v5M12 12v5M17 12v5" stroke="#7b6558" />
+                  <path d="M3 19h18" stroke="#7b6558" stroke-width="2" />
+                </svg>
+                <strong>Campus</strong><small>Map &amp; Info</small>
+              </button>
+            </section>
+
+            <div class="section-row recent-chats-heading">
+              <h2>Recent Chats</h2>
+            </div>
+
+            <section class="recent-list">
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Exam Preparation Tips"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Exam Preparation Tips</strong
+                  ><small>Here are the best strategies for...</small>
+                </div>
+                <time>2h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Assignment Help"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Assignment Help</strong
+                  ><small>Your data structures assignment...</small>
+                </div>
+                <time>5h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Campus Events"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Campus Events</strong
+                  ><small>Upcoming tech fest details...</small>
+                </div>
+                <time>1d ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Exam Preparation Tips"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Exam Preparation Tips</strong
+                  ><small>Here are the best strategies for...</small>
+                </div>
+                <time>2h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Assignment Help"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Assignment Help</strong
+                  ><small>Your data structures assignment...</small>
+                </div>
+                <time>5h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Campus Events"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Campus Events</strong
+                  ><small>Upcoming tech fest details...</small>
+                </div>
+                <time>1d ago</time>
+              </button>
+               <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Exam Preparation Tips"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Exam Preparation Tips</strong
+                  ><small>Here are the best strategies for...</small>
+                </div>
+                <time>2h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Assignment Help"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Assignment Help</strong
+                  ><small>Your data structures assignment...</small>
+                </div>
+                <time>5h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Campus Events"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Campus Events</strong
+                  ><small>Upcoming tech fest details...</small>
+                </div>
+                <time>1d ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Exam Preparation Tips"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Exam Preparation Tips</strong
+                  ><small>Here are the best strategies for...</small>
+                </div>
+                <time>2h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Assignment Help"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Assignment Help</strong
+                  ><small>Your data structures assignment...</small>
+                </div>
+                <time>5h ago</time>
+              </button>
+              <button
+                class="chat-item action-trigger"
+                type="button"
+                aria-label="Open chat from Campus Events"
+              >
+                <div class="ai-dot">
+                  <svg
+                    class="recent-ico"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  ></svg>
+                </div>
+                <div>
+                  <strong>Campus Events</strong
+                  ><small>Upcoming tech fest details...</small>
+                </div>
+                <time>1d ago</time>
+              </button>
+            </section>
+            </div>
+          </article>
+
+          <!-- ── Search Overlay (middle screen) ── -->
+          <div id="searchOverlay">
+            <div class="search-backdrop"></div>
+            <div class="search-box">
+              <div class="search-box-label">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="10.5" cy="10.5" r="6.75" />
+                  <path d="M15.6 15.6L20 20" />
+                </svg>
+                Ask your AI buddy
+              </div>
+              <textarea
+                class="search-input"
+                id="searchInput"
+                rows="3"
+                placeholder="What do you want to know?"
+                autocomplete="off"
+              ></textarea>
+              <div class="search-hint">
+                Press <kbd>Enter</kbd> to chat &middot; <kbd>Esc</kbd> to close
+              </div>
+            </div>
+            <div class="ai-vibes">
+              <div class="ai-vibes-art">
+                <!-- Robot 1 -->
+                <div class="robot">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <rect
+                      x="12"
+                      y="16"
+                      width="24"
+                      height="20"
+                      rx="6"
+                      fill="#d0d7f2"
+                      stroke="#8b8fc7"
+                      stroke-width="1.5"
+                    />
+                    <rect
+                      x="18"
+                      y="24"
+                      width="4"
+                      height="4"
+                      rx="2"
+                      fill="#6366f1"
+                    />
+                    <rect
+                      x="26"
+                      y="24"
+                      width="4"
+                      height="4"
+                      rx="2"
+                      fill="#6366f1"
+                    />
+                    <rect
+                      x="20"
+                      y="8"
+                      width="8"
+                      height="8"
+                      rx="4"
+                      fill="#c7b8f2"
+                      stroke="#8b8fc7"
+                      stroke-width="1.5"
+                    />
+                    <path d="M24 16v0" stroke="#8b8fc7" stroke-width="1.5" />
+                    <path
+                      d="M8 26h4M36 26h4"
+                      stroke="#8b8fc7"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M20 32h8"
+                      stroke="#f7a400"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M24 4v4"
+                      stroke="#f7a400"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="24" cy="3" r="2" fill="#f7a400" />
+                  </svg>
+                  <span class="robot-label">Buddy</span>
+                </div>
+                <!-- Robot 2 -->
+                <div class="robot">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <rect
+                      x="10"
+                      y="18"
+                      width="28"
+                      height="18"
+                      rx="5"
+                      fill="#ffe0b2"
+                      stroke="#e6a756"
+                      stroke-width="1.5"
+                    />
+                    <circle cx="19" cy="27" r="3" fill="#f7a400" />
+                    <circle cx="29" cy="27" r="3" fill="#f7a400" />
+                    <circle cx="19" cy="27" r="1.2" fill="#fff" />
+                    <circle cx="29" cy="27" r="1.2" fill="#fff" />
+                    <path
+                      d="M22 31c0 1.1.9 2 2 2s2-.9 2-2"
+                      stroke="#e6a756"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <rect
+                      x="18"
+                      y="10"
+                      width="12"
+                      height="8"
+                      rx="4"
+                      fill="#ffd183"
+                      stroke="#e6a756"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M6 28l4-2v4l-4-2zM42 28l-4-2v4l4-2z"
+                      fill="#e6a756"
+                    />
+                    <path
+                      d="M20 38v4M28 38v4"
+                      stroke="#e6a756"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  <span class="robot-label">Helper</span>
+                </div>
+                <!-- Robot 3 -->
+                <div class="robot">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <rect
+                      x="14"
+                      y="16"
+                      width="20"
+                      height="22"
+                      rx="10"
+                      fill="#c8e6c9"
+                      stroke="#66bb6a"
+                      stroke-width="1.5"
+                    />
+                    <circle cx="20" cy="25" r="2.5" fill="#43a047" />
+                    <circle cx="28" cy="25" r="2.5" fill="#43a047" />
+                    <path
+                      d="M20 31h8"
+                      stroke="#43a047"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M18 16c-2-4 0-8 6-10M30 16c2-4 0-8-6-10"
+                      stroke="#66bb6a"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <circle cx="16" cy="5" r="2" fill="#a5d6a7" />
+                    <circle cx="32" cy="5" r="2" fill="#a5d6a7" />
+                    <path
+                      d="M10 24h4M34 24h4"
+                      stroke="#66bb6a"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  <span class="robot-label">Scout</span>
+                </div>
+              </div>
+              <div class="ai-vibes-text">
+                LPU <span>AI Buddy</span> is ready to help!
+              </div>
+              <div class="ai-vibes-funtext">
+                "We've been trained to solve your problems 24 X 7..." 🤖
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Chat Screen ── -->
+          <article id="chatScreen" class="screen">
+            <header class="chat-top">
+              <button class="back" type="button" aria-label="Back to home">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M14 6L8 12L14 18"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div class="bot-avatar">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 class="chat-title">LPU Buddy</h1>
+                <div class="online">Online</div>
+              </div>
+              <!-- 3 tool buttons on chat screen too -->
+              <div class="chat-top-right">
+                <button
+                  id="themeToolChat"
+                  class="tool-btn"
+                  type="button"
+                  aria-label="Toggle theme"
+                  data-tip="Theme"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                </button>
+                <button
+                  class="tool-btn"
+                  type="button"
+                  aria-label="View tutorial"
+                  data-tip="Help"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" />
+                    <path
+                      d="M9.8 9.2a2.4 2.4 0 0 1 4.2 1.6c0 1.6-1.7 2.1-2.1 2.8"
+                    />
+                    <path d="M12 16.8h.01" />
+                  </svg>
+                </button>
+                <button
+                  id="deleteTool"
+                  class="tool-btn"
+                  type="button"
+                  aria-label="Delete chat"
+                  data-tip="Delete"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M5.5 7.5h13" />
+                    <path d="M9 7.5v-2h6v2" />
+                    <path d="M8 9.5l.7 8h6.6l.7-8" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <section class="thread" id="thread">
+              <div class="bot-msg-row">
+                <div class="bot-msg-avatar">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div class="bubble">
+                    <p>
+                      Hi! I'm your LPU AI assistant. I can help with
+                      <strong
+                        >attendance, exams, results, fee details,
+                        courses</strong
+                      >
+                      and everything campus. Just ask!
+                    </p>
+                  </div>
+                  <div class="stamp">9:41 AM</div>
+                </div>
+              </div>
+              <div class="user-msg-row">
+                <div class="user-msg-avatar">JS</div>
+                <div class="bubble user">
+                  <p>How do I check my attendance?</p>
+                </div>
+              </div>
+              <div class="bot-msg-row">
+                <div class="bot-msg-avatar">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                </div>
+                <div class="bubble">
+                  <p>You can check your attendance through the UMS portal:</p>
+                  <ol>
+                    <li>Login to UMS</li>
+                    <li>Go to "Attendance"</li>
+                    <li>Select your course</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="user-msg-row">
+                <div class="user-msg-avatar">JS</div>
+                <div class="bubble user">
+                  <p>
+                    What's the minimum attendance criteria in the university?
+                  </p>
+                </div>
+              </div>
+              <div class="bot-msg-row">
+                <div class="bot-msg-avatar">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div class="bubble">
+                    <p>
+                      LPU requires a minimum of 75% attendance in each course.
+                      Below 75% may result in detention.
+                    </p>
+                    <div class="links">
+                      <span>Helpful</span><span>Learn More</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="user-msg-row">
+                <div class="user-msg-avatar">JS</div>
+                <div class="bubble user">
+                  <p>Any tips to improve my attendance?</p>
+                </div>
+              </div>
+              <div class="bot-msg-row">
+                <div class="bot-msg-avatar">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                    />
+                  </svg>
+                </div>
+                <div class="bubble">
+                  <p>Here are some tips:</p>
+                  <p>
+                    &bull; Set daily class reminders<br />
+                    &bull; Track via UMS weekly<br />
+                    &bull; Prioritize low-attendance courses
+                  </p>
+                </div>
+              </div>
+
+              <!-- Suggested chips: inside thread so they scroll -->
+              <div class="suggested-area" id="suggestedArea">
+                <div class="suggested">Suggested</div>
+                <div class="chips">
+                  <div class="chip" data-query="What's my exam schedule?">
+                    Exam Schedule
+                  </div>
+                  <div class="chip" data-query="Show me fee details">
+                    Fee Details
+                  </div>
+                  <div class="chip" data-query="Show my results">My Results</div>
+                </div>
+              </div>
+
+              <!-- Typing indicator with bot avatar -->
+              <div class="bot-msg-row hidden" id="typingIndicator">
+                <div class="bot-msg-avatar">
+                  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="typing-indicator">
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                </div>
+              </div>
+            </section>
+
+            <div class="composer-wrap">
+              <input
+                class="composer"
+                id="composerInput"
+                type="text"
+                placeholder="Type your question..."
+                autocomplete="off"
+              />
+              <button
+                class="send"
+                id="sendBtn"
+                type="button"
+                aria-label="Send message"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  style="transform: rotate(180deg)"
+                >
+                  <path d="M2 12L20 4L14 12L20 20L2 12Z" />
+                </svg>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const homeScreen = document.getElementById("homeScreen");
+      const chatScreen = document.getElementById("chatScreen");
+      const searchOverlay = document.getElementById("searchOverlay");
+      const searchInput = document.getElementById("searchInput");
+      const app = document.getElementById("app");
+      const themeTool = document.getElementById("themeTool");
+      const themeToolChat = document.getElementById("themeToolChat");
+      const backButton = document.querySelector(".back");
+      const greetingText = document.getElementById("greetingText");
+      const thread = document.getElementById("thread");
+      const actionTriggers = document.querySelectorAll(".action-trigger");
+      const recentIcons = document.querySelectorAll(".recent-ico");
+      const searchBar = document.getElementById("searchBar");
+      const composerInput = document.getElementById("composerInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const typingIndicator = document.getElementById("typingIndicator");
+      const chips = document.querySelectorAll(".chip");
+
+      const TYPING_DELAY_BASE_MS = 1200;
+      const TYPING_DELAY_VARIANCE_MS = 800;
+      const SEARCH_TO_CHAT_DELAY_MS = 450;
+
+      const state = { screen: "home", theme: "light" };
+
+      const greetingRow = document.querySelector(".greeting-row");
+      const homeScroll = document.querySelector(".home-scroll");
+
+      /* ── Greeting ── */
+      function updateGreeting() {
+        const h = new Date().getHours();
+        if (h >= 4 && h < 12) {
+          greetingText.textContent = "Good Morning";
+        } else if (h >= 12 && h < 16) {
+          greetingText.textContent = "Good Afternoon";
+        } else {
+          greetingText.textContent = "Good Evening";
+        }
+      }
+
+      /* ── Scroll ── */
+      function scrollChatToBottom() {
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      }
+
+      /* ── Timestamp ── */
+      function getTimeStamp() {
+        const now = new Date();
+        let h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return h + ":" + m + " " + ampm;
+      }
+
+      /* ── Screen transitions ── */
+      function setScreen(screen) {
+        const prev = state.screen;
+        state.screen = screen;
+
+        // Close search overlay if leaving it
+        if (prev === "search" && screen !== "search") {
+          searchOverlay.classList.remove("active");
+        }
+
+        if (screen === "home") {
+          homeScreen.classList.remove("leaving");
+          homeScreen.classList.add("active");
+          chatScreen.classList.remove("active");
+          searchOverlay.classList.remove("active");
+          homeScreen.scrollTop = 0;
+          app.scrollTop = 0;
+        } else if (screen === "search") {
+          // Blur home, show search overlay
+          homeScreen.classList.add("leaving");
+          homeScreen.classList.remove("active");
+          chatScreen.classList.remove("active");
+          searchOverlay.classList.add("active");
+          requestAnimationFrame(() => searchInput.focus());
+        } else if (screen === "chat") {
+          homeScreen.classList.add("leaving");
+          homeScreen.classList.remove("active");
+          searchOverlay.classList.remove("active");
+          chatScreen.classList.add("active");
+          requestAnimationFrame(() => {
+            scrollChatToBottom();
+            composerInput.focus();
+          });
+        }
+      }
+
+      const SUN_SVG = '<path d="M12 3v2M12 19v2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4L7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/>';
+      const MOON_SVG = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+
+      function setTheme(theme) {
+        state.theme = theme;
+        app.classList.toggle("dark", theme === "dark");
+        const icon = theme === "dark" ? SUN_SVG : MOON_SVG;
+        themeTool.querySelector("svg").innerHTML = icon;
+        themeToolChat.querySelector("svg").innerHTML = icon;
+      }
+
+      function toggleTheme() {
+        setTheme(state.theme === "light" ? "dark" : "light");
+      }
+
+      const suggestedArea = document.getElementById("suggestedArea");
+
+      const BOT_AVATAR_SVG_PATH = "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z";
+
+      /* ── Create avatar elements ── */
+      function createBotAvatar() {
+        const div = document.createElement("div");
+        div.className = "bot-msg-avatar";
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", BOT_AVATAR_SVG_PATH);
+        svg.appendChild(path);
+        div.appendChild(svg);
+        return div;
+      }
+
+      function createUserAvatar() {
+        const div = document.createElement("div");
+        div.className = "user-msg-avatar";
+        div.textContent = "JS";
+        return div;
+      }
+
+      /* ── Add message ── */
+      function addMessage(text, isUser) {
+        typingIndicator.classList.add("hidden");
+        suggestedArea.classList.remove("hidden");
+
+        const wrap = document.createElement("div");
+        wrap.classList.add("msg-enter");
+
+        if (isUser) {
+          wrap.classList.add("user-msg-row");
+          wrap.appendChild(createUserAvatar());
+          const bubble = document.createElement("div");
+          bubble.className = "bubble user";
+          const p = document.createElement("p");
+          p.textContent = text;
+          bubble.appendChild(p);
+          wrap.appendChild(bubble);
+        } else {
+          wrap.classList.add("bot-msg-row");
+          wrap.appendChild(createBotAvatar());
+          const inner = document.createElement("div");
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          const p = document.createElement("p");
+          p.textContent = text;
+          bubble.appendChild(p);
+          inner.appendChild(bubble);
+          const stamp = document.createElement("div");
+          stamp.className = "stamp";
+          stamp.textContent = getTimeStamp();
+          inner.appendChild(stamp);
+          wrap.appendChild(inner);
+        }
+
+        thread.insertBefore(wrap, suggestedArea);
+        scrollChatToBottom();
+      }
+
+      /* ── Mock bot responses ── */
+      const mockResponses = [
+        "I can help you with that! Let me look up the details for you.",
+        "Great question! Based on your records, everything looks on track.",
+        "Here's what I found — you can also check the UMS portal for more details.",
+        "I've noted your query. You'll find the updated info on the student dashboard.",
+        "Sure! Let me pull that up for you right away.",
+      ];
+
+      function showTypingAndRespond() {
+        suggestedArea.classList.add("hidden");
+        typingIndicator.classList.remove("hidden");
+        scrollChatToBottom();
+        setTimeout(
+          () => {
+            typingIndicator.classList.add("hidden");
+            addMessage(
+              mockResponses[Math.floor(Math.random() * mockResponses.length)],
+              false,
+            );
+          },
+          TYPING_DELAY_BASE_MS + Math.random() * TYPING_DELAY_VARIANCE_MS,
+        );
+      }
+
+      /* ── Send message ── */
+      function sendMessage() {
+        const text = composerInput.value.trim();
+        if (!text) return;
+        addMessage(text, true);
+        composerInput.value = "";
+        showTypingAndRespond();
+      }
+
+      /* ── Event listeners ── */
+
+      // Both theme buttons
+      themeTool.addEventListener("click", toggleTheme);
+      themeToolChat.addEventListener("click", toggleTheme);
+
+      // Action triggers → chat
+      actionTriggers.forEach((t) =>
+        t.addEventListener("click", () => setScreen("chat")),
+      );
+
+      // Search bar → search overlay (NOT directly to chat)
+      searchBar.addEventListener("click", () => setScreen("search"));
+      searchBar.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setScreen("search");
+        }
+      });
+
+      // Search input behavior
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          const text = searchInput.value.trim();
+          if (text) {
+            // Transition to chat and send the query
+            setScreen("chat");
+            setTimeout(() => {
+              composerInput.value = text;
+              searchInput.value = "";
+              sendMessage();
+            }, SEARCH_TO_CHAT_DELAY_MS);
+          }
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          searchInput.value = "";
+          setScreen("home");
+        } else if (e.key === "Backspace" && searchInput.value === "") {
+          // Backspace on empty → go home with nice transition
+          e.preventDefault();
+          setScreen("home");
+        }
+      });
+
+      // Click backdrop to close search
+      document
+        .querySelector(".search-backdrop")
+        .addEventListener("click", () => {
+          searchInput.value = "";
+          setScreen("home");
+        });
+
+      // Back button
+      if (backButton) {
+        backButton.addEventListener("click", () => setScreen("home"));
+        backButton.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setScreen("home");
+          }
+        });
+      }
+
+      // Send
+      sendBtn.addEventListener("click", sendMessage);
+      composerInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // Chips → send as message
+      chips.forEach((c) => {
+        c.addEventListener("click", () => {
+          composerInput.value = c.getAttribute("data-query") || c.textContent;
+          sendMessage();
+        });
+      });
+
+      /* ── Random recent icons ── */
+      const recentIconPool = [
+        [{ tag: "path", d: "M6 5h12v14H6z" }, { tag: "path", d: "M9 9h6M9 12h6M9 15h4" }],
+        [{ tag: "circle", cx: "12", cy: "12", r: "7" }, { tag: "path", d: "M12 8v4l2.8 1.8" }],
+        [{ tag: "path", d: "M4 8.5h16v10H4z" }, { tag: "path", d: "M8 8.5V6h8v2.5" }, { tag: "path", d: "M8 13h8" }],
+      ];
+      recentIcons.forEach((icon) => {
+        const shapes = recentIconPool[Math.floor(Math.random() * recentIconPool.length)];
+        shapes.forEach((attrs) => {
+          const el = document.createElementNS("http://www.w3.org/2000/svg", attrs.tag);
+          Object.keys(attrs).forEach((key) => {
+            if (key !== "tag") el.setAttribute(key, attrs[key]);
+          });
+          icon.appendChild(el);
+        });
+      });
+
+      /* ── Home scroll: collapse greeting, expand search ── */
+      homeScroll.addEventListener("scroll", () => {
+        const scrolled = homeScroll.scrollTop > 20;
+        greetingRow.classList.toggle("collapsed", scrolled);
+        searchBar.classList.toggle("expanded", scrolled);
+      });
+
+      /* ── Cycling search placeholder ── */
+      const searchPlaceholder = document.getElementById("searchPlaceholder");
+      const placeholderTexts = [
+        "Ask me anything...",
+        "What is my attendance status?",
+        "When is my next fee pending?",
+        "Show my exam schedule",
+        "What's my current CGPA?",
+        "Any campus events this week?",
+        "Check my assignment deadlines",
+        "Who is my class coordinator?",
+        "Library timings today?",
+      ];
+      let placeholderIndex = 0;
+
+      setInterval(() => {
+        const current = searchPlaceholder.querySelector("span");
+        current.classList.add("out");
+
+        setTimeout(() => {
+          placeholderIndex = (placeholderIndex + 1) % placeholderTexts.length;
+          const next = document.createElement("span");
+          next.textContent = placeholderTexts[placeholderIndex];
+          next.style.opacity = "0";
+          next.style.transform = "translateY(100%)";
+          searchPlaceholder.replaceChild(next, current);
+          requestAnimationFrame(() => {
+            next.style.opacity = "1";
+            next.style.transform = "translateY(0)";
+          });
+        }, 500);
+      }, 3000);
+
+      /* ── Init ── */
+      updateGreeting();
+      setScreen("home");
+    </script>
+  </body>
+</html>

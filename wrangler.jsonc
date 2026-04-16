@@ -1,0 +1,11 @@
+{
+  "name": "static-pages",
+  "compatibility_date": "2026-04-16",
+  "build": {
+    "watch_dir": ["index.html", "apps.json", "assets", "chat"]
+  },
+  "assets": {
+    "directory": ".",
+    "html_handling": "drop-trailing-slash"
+  }
+}
