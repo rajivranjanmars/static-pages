@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LPU DE Widget Harness</title>
+  </head>
+  <body>
+    <script>
+      const APP_ID = "d39af75a-3450-44c4-af0c-54a0344d5d98";
+      const TOKEN_TTL_SECONDS = 120;
+      const PRIVATE_KEY_PEM = `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg4Y4KZRuBoy4/lKH5
+7TZPFZbuRCSR0EaENWc+M0qP8mShRANCAAR+da2WZ3xfD4e/rGLasUZ0w7KSxJl70
+kj1wLwWClBypIoql/hnuaszpfZqp+EeaubKcjcPugU4YFuQ8IBmEPlC
+-----END PRIVATE KEY-----`;
+
+      const widgetConfig = {
+        actorId: "",
+        forceWorkflow: "lead_capture",
+        signedToken: "",
+        streaming: true,
+        backend: {
+          baseUrl: "https://chatmcp.r24.dev",
+        },
+        ui: {
+          headerTitle: "LPU DE Buddy",
+          searchLabel: "Ask LPU DE Buddy",
+          funText:
+            "Support for admissions, programs, fees, examinations, and student help.",
+          placeholders: [
+            "Ask about admissions, eligibility, or fees",
+            "Need help with programs or exam details?",
+            "What would you like to know about LPU DE today?",
+          ],
+        },
+      };
+
+      /**
+       * Builds a fresh guest actor id on every token generation.
+       * @returns {string}
+       */
+      function buildActorId() {
+        return `guest-${crypto.randomUUID()}`;
+      }
+
+      /**
+       * Creates a short-lived guest token directly in the page for private use.
+       * @param {string} actorId
+       * @returns {Promise<{ actorId: string, signedToken: string }>}
+       */
+      async function createSignedGuestToken(actorId) {
+        const { importPKCS8, SignJWT } = await import(
+          "https://cdn.jsdelivr.net/npm/jose@5/+esm"
+        );
+        const privateKey = await importPKCS8(PRIVATE_KEY_PEM, "ES256");
+        const signedToken = await new SignJWT({
+          actor_id: actorId,
+          actor_type: "GUEST",
+        })
+          .setProtectedHeader({ alg: "ES256", typ: "JWT" })
+          .setIssuer(APP_ID)
+          .setExpirationTime(`${TOKEN_TTL_SECONDS}s`)
+          .sign(privateKey);
+
+        return { actorId, signedToken };
+      }
+
+      /**
+       * Loads the widget bundle and boots it with a fresh short-lived token.
+       * @returns {Promise<void>}
+       */
+      async function bootWidget() {
+        const actorId = buildActorId();
+        const tokenPayload = await createSignedGuestToken(actorId);
+        widgetConfig.actorId = actorId;
+        widgetConfig.signedToken = tokenPayload.signedToken;
+        globalThis.__LPU_DE_BUDDY_ACTOR_ID__ = actorId;
+
+        if (!globalThis.LPUWidget) {
+          const script = document.createElement("script");
+          script.src =
+            "https://chatbot-frontend.rajivranjanmars.workers.dev/widget.js";
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+
+        globalThis.LPUWidget.destroy?.();
+        globalThis.LPUWidget.init(widgetConfig);
+      }
+
+      bootWidget().catch((error) => {
+        console.error("Failed to initialize LPU DE widget harness", error);
+      });
+    </script>
+  </body>
+</html>

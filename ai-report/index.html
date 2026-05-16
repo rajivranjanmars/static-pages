@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Chatbot LMS Analytics Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #6C3AF5;
+    --primary-light: #8B5CF6;
+    --secondary: #06B6D4;
+    --accent: #F59E0B;
+    --success: #10B981;
+    --danger: #EF4444;
+    --dark: #0F172A;
+    --card-bg: #1E293B;
+    --card-border: #334155;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --gradient1: linear-gradient(135deg, #6C3AF5 0%, #06B6D4 100%);
+    --gradient2: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+    --gradient3: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+    --gradient4: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0A0F1E;
+    color: var(--text-primary);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(10,15,30,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 18px; font-weight: 800; color: var(--text-primary);
+  }
+  .nav-logo .dot {
+    width: 36px; height: 36px;
+    background: var(--gradient1);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    padding: 7px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav-links a:hover { background: var(--card-bg); color: var(--text-primary); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 80px 32px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(108,58,245,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(6,182,212,0.12) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image: linear-gradient(var(--card-border) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--card-border) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  .hero-content { position: relative; text-align: center; max-width: 900px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(108,58,245,0.15);
+    border: 1px solid rgba(108,58,245,0.4);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: 13px; font-weight: 600;
+    color: #A78BFA;
+    margin-bottom: 28px;
+  }
+  .hero-badge .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #A78BFA;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.5); }
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 68px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 0%, #A78BFA 50%, #67E8F9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 18px; color: var(--text-secondary);
+    line-height: 1.7; max-width: 600px; margin: 0 auto 48px;
+  }
+
+  /* HERO KPI CARDS */
+  .hero-kpis {
+    display: flex; gap: 20px; justify-content: center;
+    /*flex-wrap: wrap;*/
+    margin-top: 10px;
+  }
+  .kpi-card {
+    background: rgba(30,41,59,0.7);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 28px 20px;
+    text-align: center;
+    min-width: 200px;
+    backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+  .kpi-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--grad); opacity: 0.06;
+    border-radius: 20px;
+  }
+  .kpi-card .kpi-icon {
+    font-size: 32px; margin-bottom: 12px;
+    display: block;
+  }
+  .kpi-card .kpi-val {
+    font-size: 42px; font-weight: 900;
+    line-height: 1;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .kpi-card .kpi-label {
+    font-size: 13px; color: var(--text-secondary);
+    margin-top: 8px; font-weight: 500;
+  }
+  .kpi-card .kpi-sub {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 4px; opacity: 0.7;
+  }
+
+  /* SECTION */
+  .section {
+    padding: 80px 32px;
+    max-width: 1400px; margin: 0 auto;
+  }
+  .section-header {
+    text-align: center; margin-bottom: 52px;
+  }
+  .section-tag {
+    display: inline-block;
+    background: rgba(108,58,245,0.12);
+    border: 1px solid rgba(108,58,245,0.3);
+    border-radius: 50px;
+    padding: 5px 16px;
+    font-size: 12px; font-weight: 600;
+    color: #A78BFA; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .section-header h2 {
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+  .section-header p {
+    font-size: 16px; color: var(--text-secondary);
+    max-width: 520px; margin: 0 auto;
+  }
+
+  /* CHART CARDS */
+  .chart-grid {
+    display: grid;
+    gap: 24px;
+  }
+  .chart-grid-2 { grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); }
+  .chart-grid-3 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  .chart-grid-1 { grid-template-columns: 1fr; }
+
+  .chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative; overflow: hidden;
+  }
+  .chart-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent-grad, var(--gradient1));
+    border-radius: 20px 20px 0 0;
+  }
+  .chart-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .chart-card-title { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+  .chart-card-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .chart-badge {
+    background: rgba(108,58,245,0.15);
+    border: 1px solid rgba(108,58,245,0.3);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 12px; font-weight: 600;
+    color: #A78BFA;
+    white-space: nowrap;
+  }
+  .chart-container { position: relative; }
+  .chart-container canvas { max-height: 340px; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--card-border), transparent);
+    margin: 0 32px;
+  }
+
+  /* TABLE SECTION */
+  .table-wrapper {
+    overflow-x: auto; border-radius: 16px;
+    border: 1px solid var(--card-border);
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--card-bg);
+  }
+  thead tr { background: rgba(108,58,245,0.12); }
+  th {
+    padding: 14px 18px; text-align: left;
+    font-size: 12px; font-weight: 700;
+    color: #A78BFA; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--card-border);
+  }
+  td {
+    padding: 13px 18px;
+    font-size: 14px; color: var(--text-secondary);
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); color: var(--text-primary); }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px;
+    font-size: 12px; font-weight: 700;
+    background: rgba(108,58,245,0.2); color: #A78BFA;
+  }
+  .rank-badge.gold { background: rgba(245,158,11,0.2); color: #F59E0B; }
+  .rank-badge.silver { background: rgba(148,163,184,0.2); color: #94A3B8; }
+  .rank-badge.bronze { background: rgba(251,146,60,0.2); color: #FB923C; }
+  .progress-bar-wrap {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .progress-bar {
+    height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, #6C3AF5, #06B6D4);
+    min-width: 4px;
+  }
+
+  /* USAGE SECTION */
+  .usage-hero {
+    background: linear-gradient(135deg, rgba(108,58,245,0.15) 0%, rgba(6,182,212,0.1) 100%);
+    border: 1px solid rgba(108,58,245,0.25);
+    border-radius: 24px;
+    padding: 48px;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .usage-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 50% 70% at 50% 0%, rgba(108,58,245,0.12) 0%, transparent 70%);
+  }
+  .usage-ratio {
+    position: relative;
+    display: inline-flex; align-items: baseline; gap: 12px;
+    font-size: 80px; font-weight: 900;
+    background: var(--gradient1);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    line-height: 1;
+  }
+  .usage-ratio .pct-label {
+    font-size: 28px; opacity: 0.8;
+  }
+  .usage-desc {
+    font-size: 17px; color: var(--text-secondary); margin-top: 14px;
+  }
+  .usage-compare {
+    display: flex; gap: 32px; justify-content: center; margin-top: 32px; flex-wrap: wrap;
+  }
+  .usage-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .usage-item .val {
+    font-size: 32px; font-weight: 800;
+    color: var(--text-primary);
+  }
+  .usage-item .lbl {
+    font-size: 13px; color: var(--text-secondary);
+  }
+  .usage-item .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  /* FOOTER */
+  .footer {
+    background: rgba(15,23,42,0.8);
+    border-top: 1px solid var(--card-border);
+    padding: 32px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .footer .brand {
+    font-size: 20px; font-weight: 800;
+    background: var(--gradient1);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  /* HIGHLIGHT NUMBERS */
+  .hl { color: #A78BFA; font-weight: 700; }
+  .hl-cyan { color: #67E8F9; font-weight: 700; }
+  .hl-gold { color: #F59E0B; font-weight: 700; }
+  .hl-green { color: #34D399; font-weight: 700; }
+
+  /* SCROLL ANIM */
+  .fade-up {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 20px 60px; }
+    .section { padding: 60px 20px; }
+    .hero-kpis { gap: 14px; }
+    .kpi-card { min-width: 150px; padding: 20px 24px; }
+    .kpi-card .kpi-val { font-size: 32px; }
+    .usage-hero { padding: 32px 20px; }
+    .usage-ratio { font-size: 56px; }
+  }
+</style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav">
+        <div class="nav-logo">
+            <div class="dot">🤖</div>
+            <span>AI Chatbot Analytics</span>
+        </div>
+        <div class="nav-links">
+            <a href="#overview">Overview</a>
+            <a href="#programs">Programs</a>
+            <a href="#semesters">Semesters</a>
+            <a href="#sessions">Sessions</a>
+            <a href="#courses">Courses</a>
+            <a href="#feedback">Feedback</a>
+            <a href="#faq">FAQ</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="overview">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse"></span>
+                LMS AI Chatbot — Analytics Dashboard
+            </div>
+            <h1>AI Chatbot Usage<br />Analytics Report</h1>
+            <p>Comprehensive analysis of AI Chatbot engagement across all programs, semesters, sessions and courses on the Learning Management System.</p>
+
+            <!-- KPI CARDS -->
+            <div class="hero-kpis">
+                <div class="kpi-card" style="--grad: linear-gradient(135deg, #6C3AF5, #8B5CF6);">
+                    <span class="kpi-icon">💰</span>
+                    <div class="kpi-val">₹800</div>
+                    <div class="kpi-label">Total Cost (INR)</div>
+                    <div class="kpi-sub">For this reporting period</div>
+                </div>
+                <div class="kpi-card" style="--grad: linear-gradient(135deg, #06B6D4, #0EA5E9);">
+                    <span class="kpi-icon">👥</span>
+                    <div class="kpi-val">12,993</div>
+                    <div class="kpi-label">Chatbot Available For</div>
+                    <div class="kpi-sub">Total enrolled users</div>
+                </div>
+                <div class="kpi-card" style="--grad: linear-gradient(135deg, #b77171, #cb24ff);">
+                    <span class="kpi-icon">💻</span>
+                    <div class="kpi-val">6,165</div>
+                    <div class="kpi-label">LMS Active Users</div>
+                    <div class="kpi-sub">Opened LMS</div>
+                </div>
+                <div class="kpi-card" style="--grad: linear-gradient(135deg, #10B981, #34D399);">
+                    <span class="kpi-icon">✅</span>
+                    <div class="kpi-val">1,993</div>
+                    <div class="kpi-label">Users Actually Using</div>
+                    <div class="kpi-sub">Active chatbot users</div>
+                </div>
+                <div class="kpi-card" style="--grad: linear-gradient(135deg, #F59E0B, #EF4444);">
+                    <span class="kpi-icon">📊</span>
+                    <div class="kpi-val">15.3%</div>
+                    <div class="kpi-label">Adoption Rate</div>
+                    <div class="kpi-sub">1,993 / 12,993 users</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- USAGE SUMMARY -->
+    <section class="section">
+        <div class="usage-hero fade-up">
+            <div style="position:relative;">
+                <div style="font-size:13px; font-weight:600; color:#A78BFA; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px;">📈 Adoption Rate</div>
+                <div class="usage-ratio">15.3<span class="pct-label">%</span></div>
+                <div class="usage-desc">of enrolled users are actively engaging with the AI Chatbot</div>
+                <div class="usage-compare">
+                    <div class="usage-item">
+                        <div class="dot" style="background:#6C3AF5;"></div>
+                        <div class="val" style="color:#d567f9;">6,165</div>
+                        <div class="lbl">LMS Active Users</div>
+                    </div>
+                    <div class="usage-item" style="font-size:28px; color:#475569; align-self:center;">VS</div>
+                    <div class="usage-item">
+                        <div class="dot" style="background:#10B981;"></div>
+                        <div class="val" style="color:#34D399;">1,993</div>
+                        <div class="lbl">Users Actually Using Chatbot</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- PROGRAM WISE SECTION -->
+    <section class="section fade-up" id="programs">
+        <div class="section-header">
+            <div class="section-tag">📚 Sheet 1</div>
+            <h2>Program-Wise Chatbot Usage</h2>
+            <p>Breakdown of AI Chatbot engagement across all 16 academic programs</p>
+        </div>
+
+        <div class="chart-grid chart-grid-2">
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #6C3AF5, #8B5CF6);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Users by Program</div>
+                        <div class="chart-card-subtitle">Top 8 programs by chatbot engagement</div>
+                    </div>
+                    <div class="chart-badge">Bar Chart</div>
+                </div>
+                <div class="chart-container"><canvas id="programBar"></canvas></div>
+            </div>
+
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #06B6D4, #0EA5E9);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Program Share Distribution</div>
+                        <div class="chart-card-subtitle">Percentage of total chatbot users</div>
+                    </div>
+                    <div class="chart-badge">Doughnut</div>
+                </div>
+                <div class="chart-container"><canvas id="programDoughnut"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Program Table -->
+        <div style="margin-top: 28px;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Program Name</th>
+                            <th>Users</th>
+                            <th>Share</th>
+                            <th>Distribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="rank-badge gold">1</span></td>
+                            <td><span class="hl">Master of Business Administration</span></td>
+                            <td><strong style="color:#F1F5F9">693</strong></td>
+                            <td><span class="hl">34.8%</span></td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:100%"></div><span style="font-size:12px;color:#94A3B8">693</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge silver">2</span></td>
+                            <td>Master of Computer Applications</td>
+                            <td><strong style="color:#F1F5F9">421</strong></td>
+                            <td>21.1%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:61%"></div><span style="font-size:12px;color:#94A3B8">421</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge bronze">3</span></td>
+                            <td>Bachelor of Computer Applications</td>
+                            <td><strong style="color:#F1F5F9">314</strong></td>
+                            <td>15.8%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:45%"></div><span style="font-size:12px;color:#94A3B8">314</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">4</span></td>
+                            <td>Bachelor of Arts</td>
+                            <td><strong style="color:#F1F5F9">144</strong></td>
+                            <td>7.2%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:21%"></div><span style="font-size:12px;color:#94A3B8">144</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">5</span></td>
+                            <td>Master of Science (Mathematics)</td>
+                            <td><strong style="color:#F1F5F9">138</strong></td>
+                            <td>6.9%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:20%"></div><span style="font-size:12px;color:#94A3B8">138</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">6</span></td>
+                            <td>Bachelor of Business Administration</td>
+                            <td><strong style="color:#F1F5F9">120</strong></td>
+                            <td>6.0%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:17%"></div><span style="font-size:12px;color:#94A3B8">120</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">7</span></td>
+                            <td>Master of Arts (English)</td>
+                            <td><strong style="color:#F1F5F9">45</strong></td>
+                            <td>2.3%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:6.5%"></div><span style="font-size:12px;color:#94A3B8">45</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">8</span></td>
+                            <td>Master of Arts (Political Science)</td>
+                            <td><strong style="color:#F1F5F9">29</strong></td>
+                            <td>1.5%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:4.2%"></div><span style="font-size:12px;color:#94A3B8">29</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">9</span></td>
+                            <td>Master of Science (Economics)</td>
+                            <td><strong style="color:#F1F5F9">17</strong></td>
+                            <td>0.9%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:2.5%"></div><span style="font-size:12px;color:#94A3B8">17</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">10</span></td>
+                            <td>Master of Arts (History)</td>
+                            <td><strong style="color:#F1F5F9">17</strong></td>
+                            <td>0.9%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:2.5%"></div><span style="font-size:12px;color:#94A3B8">17</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">11</span></td>
+                            <td>Master of Arts (Sociology)</td>
+                            <td>16</td>
+                            <td>0.8%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:2.3%"></div><span style="font-size:12px;color:#94A3B8">16</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">12</span></td>
+                            <td>Master of Commerce</td>
+                            <td>14</td>
+                            <td>0.7%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:2%"></div><span style="font-size:12px;color:#94A3B8">14</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">13</span></td>
+                            <td>Bachelor of Commerce</td>
+                            <td>10</td>
+                            <td>0.5%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:1.4%"></div><span style="font-size:12px;color:#94A3B8">10</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">14</span></td>
+                            <td>Diploma in Business Administration</td>
+                            <td>7</td>
+                            <td>0.4%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:1%"></div><span style="font-size:12px;color:#94A3B8">7</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">15</span></td>
+                            <td>Diploma in Computer Applications</td>
+                            <td>7</td>
+                            <td>0.4%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:1%"></div><span style="font-size:12px;color:#94A3B8">7</span></div></td>
+                        </tr>
+                        <tr>
+                            <td><span class="rank-badge">16</span></td>
+                            <td>Master of Arts (Economics)</td>
+                            <td>1</td>
+                            <td>0.1%</td>
+                            <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:0.1%"></div><span style="font-size:12px;color:#94A3B8">1</span></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- SEMESTER WISE SECTION -->
+    <section class="section fade-up" id="semesters">
+        <div class="section-header">
+            <div class="section-tag">📅 Sheet 2</div>
+            <h2>Semester-Wise Chatbot Usage</h2>
+            <p>AI chatbot engagement distributed across all semesters for major programs</p>
+        </div>
+
+        <div class="chart-grid chart-grid-2">
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #10B981, #34D399);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Total Users by Semester</div>
+                        <div class="chart-card-subtitle">Combined across all programs</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); color:#34D399;">All Programs</div>
+                </div>
+                <div class="chart-container"><canvas id="semTotalBar"></canvas></div>
+            </div>
+
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #F59E0B, #EF4444);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Top 3 Programs by Semester</div>
+                        <div class="chart-card-subtitle">MBA, MCA, BCA semester breakdown</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.3); color:#F59E0B;">Grouped</div>
+                </div>
+                <div class="chart-container"><canvas id="semGroupedBar"></canvas></div>
+            </div>
+        </div>
+
+        <div class="chart-grid chart-grid-1" style="margin-top:24px;">
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #8B5CF6, #EC4899);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Semester Distribution — Radar View</div>
+                        <div class="chart-card-subtitle">Comparing top 3 programs across semesters</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(139,92,246,0.15); border-color:rgba(139,92,246,0.3); color:#A78BFA;">Radar Chart</div>
+                </div>
+                <div class="chart-container" style="max-width:500px; margin:0 auto;"><canvas id="semRadar"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- SESSION WISE SECTION -->
+    <section class="section fade-up" id="sessions">
+        <div class="section-header">
+            <div class="section-tag">🗓️ Sheet 3</div>
+            <h2>Session-Wise Chatbot Usage</h2>
+            <p>Admission session trends showing chatbot engagement over different intake years</p>
+        </div>
+
+        <div class="chart-grid chart-grid-2">
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #06B6D4, #6C3AF5);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">MBA — Users by Admission Year</div>
+                        <div class="chart-card-subtitle">Master of Business Administration sessions</div>
+                    </div>
+                    <div class="chart-badge">MBA</div>
+                </div>
+                <div class="chart-container"><canvas id="sessionMBA"></canvas></div>
+            </div>
+
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #10B981, #06B6D4);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">MCA — Users by Admission Year</div>
+                        <div class="chart-card-subtitle">Master of Computer Applications sessions</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); color:#34D399;">MCA</div>
+                </div>
+                <div class="chart-container"><canvas id="sessionMCA"></canvas></div>
+            </div>
+
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #F59E0B, #06B6D4);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">BCA — Users by Admission Year</div>
+                        <div class="chart-card-subtitle">Bachelor of Computer Applications sessions</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.3); color:#F59E0B;">BCA</div>
+                </div>
+                <div class="chart-container"><canvas id="sessionBCA"></canvas></div>
+            </div>
+
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #EF4444, #8B5CF6);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Top Programs — Admission Session Heatmap</div>
+                        <div class="chart-card-subtitle">All top programs combined by year</div>
+                    </div>
+                    <div class="chart-badge" style="background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#F87171;">Stacked</div>
+                </div>
+                <div class="chart-container"><canvas id="sessionStacked"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- COURSE WISE SECTION -->
+    <section class="section fade-up" id="courses">
+        <div class="section-header">
+            <div class="section-tag">📖 Sheet 4</div>
+            <h2>Course-Wise Chatbot Usage</h2>
+            <p>Top courses with highest AI Chatbot interactions across all programs</p>
+        </div>
+
+        <div class="chart-grid chart-grid-1">
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #6C3AF5, #EC4899);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Top 10 Courses by AI Chatbot Interactions</div>
+                        <div class="chart-card-subtitle">Ranked by total chatbot log count</div>
+                    </div>
+                    <div class="chart-badge">Top 10</div>
+                </div>
+                <div class="chart-container"><canvas id="courseBar" style="max-height:420px;"></canvas></div>
+            </div>
+        </div>
+
+        <div style="margin-top:28px;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Course Code</th>
+                            <th>Course Title</th>
+                            <th>Program</th>
+                            <th>Log Count</th>
+                            <th>Engagement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courseTableBody">
+                        <!-- populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEEDBACK SCORECARD SECTION -->
+    <section class="section fade-up" id="feedback">
+        <div class="section-header">
+            <div class="section-tag">⭐ Feedback</div>
+            <h2>AI Chatbot Feedback Scorecard</h2>
+            <p>User sentiment and satisfaction collected from chatbot feedback responses.</p>
+        </div>
+
+        <div class="chart-grid chart-grid-2">
+
+            <!-- KPI CARDS -->
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #6C3AF5, #06B6D4);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Feedback Overview</div>
+                        <div class="chart-card-subtitle">LPUOnline LMS chatbot feedback summary</div>
+                    </div>
+                    <div class="chart-badge">Scorecard</div>
+                </div>
+
+                <div class="hero-kpis" style="margin-top:10px; flex-wrap:wrap;">
+
+                    <div class="kpi-card" style="--grad: linear-gradient(135deg,#06B6D4,#0EA5E9); min-width:180px;">
+                        <span class="kpi-icon">📝</span>
+                        <div class="kpi-val">24,250</div>
+                        <div class="kpi-label">Total Responses</div>
+                    </div>
+
+                    <div class="kpi-card" style="--grad: linear-gradient(135deg,#10B981,#34D399); min-width:180px;">
+                        <span class="kpi-icon">👍</span>
+                        <div class="kpi-val">372</div>
+                        <div class="kpi-label">Positive</div>
+                    </div>
+
+                    <div class="kpi-card" style="--grad: linear-gradient(135deg,#EF4444,#F87171); min-width:180px;">
+                        <span class="kpi-icon">👎</span>
+                        <div class="kpi-val">1,140</div>
+                        <div class="kpi-label">Negative</div>
+                    </div>
+
+                    <div class="kpi-card" style="--grad: linear-gradient(135deg,#64748B,#94A3B8); min-width:180px;">
+                        <span class="kpi-icon">➖</span>
+                        <div class="kpi-val">22,738</div>
+                        <div class="kpi-label">Not Given</div>
+                    </div>
+
+                    <div class="kpi-card" style="--grad: linear-gradient(135deg,#F59E0B,#FB923C); min-width:180px;">
+                        <span class="kpi-icon">⭐</span>
+                        <div class="kpi-val">24.6%</div>
+                        <div class="kpi-label">Satisfaction Rate</div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- FEEDBACK CHART -->
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg, #10B981, #EF4444);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Feedback Distribution</div>
+                        <div class="chart-card-subtitle">Positive vs Negative vs Not Given</div>
+                    </div>
+                    <div class="chart-badge">Doughnut</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="feedbackChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- FAQ SECTION -->
+    <section class="section fade-up" id="faq">
+        <div class="section-header">
+            <div class="section-tag">❓ Insights</div>
+            <h2>Frequently Asked Questions</h2>
+            <p>Most common questions students ask the AI chatbot across the LMS platform</p>
+        </div>
+
+        <div class="chart-grid chart-grid-2">
+
+            <!-- BAR CHART -->
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg,#6C3AF5,#06B6D4);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Top Questions Asked</div>
+                        <div class="chart-card-subtitle">Based on chatbot usage frequency</div>
+                    </div>
+                    <div class="chart-badge">Administrative</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="faqBar"></canvas>
+                </div>
+            </div>
+
+            <!-- DONUT DISTRIBUTION -->
+            <div class="chart-card" style="--accent-grad: linear-gradient(90deg,#10B981,#F59E0B);">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Top Lecture Questions Asked to AI Tutor</div>
+                        <div class="chart-card-subtitle">Most frequent lecture-related queries</div>
+                    </div>
+                    <div class="chart-badge">Lecture Based</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="lectureQuestions"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TABLE -->
+        <div style="margin-top:28px;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User Question</th>
+                            <th>Times Asked</th>
+                            <th>Popularity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faqTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="brand">🤖 AI Chatbot Analytics Dashboard</div>
+        <p>
+            LMS AI Chatbot Usage Report · All Data from Institutional Analytics ·
+            Total Cost: <strong style="color:#A78BFA">₹800 INR</strong>
+            · Available: <strong style="color:#67E8F9">12,993 users</strong>
+            · Active LMS Users: <strong style="color: #d567f9">6,165 users</strong>
+            · Active: <strong style="color:#34D399">1,993 users</strong>
+        </p>
+    </footer>
+
+    <script>
+		// ===================== FAQ DATA =====================
+		const faqData = [
+			["Summarize this lecture", 5888],
+			["Result", 108],
+			["Attendance", 105],
+			["Exams", 79],
+			["Academic Performance", 56]
+		];
+
+		// ===================== FAQ BAR =====================
+		new Chart(document.getElementById('faqBar'), {
+			type: 'bar',
+			data: {
+				labels: [
+					["Summarize this", "lecture"],
+					["Result"],
+					["Attendance"],
+					["Exams"],
+					["Academic", "Performance"]
+				],
+				datasets: [{
+					label: "Asked Count",
+					data: [5888, 108, 105, 79, 56],
+					backgroundColor: [
+						'#6C3AF5',
+						'#06B6D4',
+						'#10B981',
+						'#F59E0B',
+						'#EF4444'
+					],
+					borderRadius: 10,
+					borderSkipped: false
+				}]
+			},
+			options: {
+				indexAxis: 'y',   // 👈 makes chart horizontal
+				responsive: true,
+				plugins: {
+					legend: { display: false }
+				},
+				scales: {
+					x: {
+						beginAtZero: true,
+                        grid: { color: 'rgba(51,65,85,0.5)' },
+						ticks: {
+							color: '#ffffff'   // 👈 X axis labels white
+						}
+					},
+					y: {
+                        grid: { display: false }
+                        ,ticks: {
+							color: '#ffffff'   // 👈 X axis labels white
+						}
+					}
+				}
+			}
+        });
+
+		// ===================== FAQ BAR =====================
+		new Chart(document.getElementById('lectureQuestions'), {
+			type: 'bar',
+			data: {
+				labels: [
+					["Features", "of Linux"],
+					["Functions", "of Management"],
+					["Business Environment", "Components"],
+					["Managerial", "Economics Concepts"],
+					["Marketing Basic", "Concepts"]
+				],
+				datasets: [{
+					label: "Asked Count",
+					data: [7, 6, 5, 5, 5],
+					backgroundColor: [
+						'#6C3AF5',
+						'#06B6D4',
+						'#10B981',
+						'#F59E0B',
+						'#EF4444'
+					],
+					borderRadius: 10,
+					borderSkipped: false
+				}]
+			},
+			options: {
+				indexAxis: 'y',   // 👈 makes chart horizontal
+				responsive: true,
+				plugins: {
+					legend: { display: false }
+				},
+				scales: {
+					x: {
+						beginAtZero: true,
+                        grid: { color: 'rgba(51,65,85,0.5)' }
+						, ticks: {
+							color: '#ffffff'   // 👈 X axis labels white
+						}
+					},
+					y: {
+                        grid: { display: false }
+						, ticks: {
+							color: '#ffffff'   // 👈 X axis labels white
+						}
+					}
+				}
+			}
+		});
+
+
+		// ===================== FAQ DONUT =====================
+		new Chart(document.getElementById('faqDonut'), {
+			type: 'doughnut',
+			data: {
+				labels: faqData.map(f => f[0]),
+				datasets: [{
+					data: faqData.map(f => f[1]),
+					backgroundColor: [
+						'#6C3AF5',
+						'#06B6D4',
+						'#10B981',
+						'#F59E0B',
+						'#EF4444'
+					],
+					borderWidth: 2,
+					borderColor: '#1E293B'
+				}]
+			},
+			options: {
+				responsive: true,
+				cutout: '68%',
+				plugins: {
+					legend: {
+						position: 'bottom',
+						labels: {
+							usePointStyle: true,
+							padding: 16
+						}
+					}
+				}
+			}
+		});
+
+		// ===================== FAQ TABLE =====================
+		const faqTable = document.getElementById("faqTable");
+		const maxFaq = faqData[0][1];
+
+		faqData.forEach((f, i) => {
+			const pct = ((f[1] / maxFaq) * 100).toFixed(0);
+
+			faqTable.innerHTML += `
+  <tr>
+    <td><span class="rank-badge ${i == 0 ? 'gold' : i == 1 ? 'silver' : i == 2 ? 'bronze' : ''}">${i + 1}</span></td>
+    <td style="font-weight:600;color:#F1F5F9">${f[0]}</td>
+    <td><strong style="color:#F1F5F9">${f[1]}</strong></td>
+    <td>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${pct}%"></div>
+        <span style="font-size:12px;color:#94A3B8">${pct}%</span>
+      </div>
+    </td>
+  </tr>
+  `;
+        });
+
+        // ===================== CHART DEFAULTS =====================
+        Chart.defaults.color = '#94A3B8';
+        Chart.defaults.borderColor = '#334155';
+        Chart.defaults.font.family = 'Inter';
+
+        const colors = {
+            purple: '#6C3AF5',
+            violet: '#8B5CF6',
+            cyan: '#06B6D4',
+            sky: '#0EA5E9',
+            green: '#10B981',
+            emerald: '#34D399',
+            amber: '#F59E0B',
+            orange: '#FB923C',
+            red: '#EF4444',
+            pink: '#EC4899',
+            slate: '#94A3B8',
+        };
+
+        const programColors = [
+            '#6C3AF5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444',
+            '#8B5CF6', '#EC4899', '#34D399', '#FB923C', '#0EA5E9',
+            '#A78BFA', '#67E8F9', '#6EE7B7', '#FCD34D', '#FCA5A5', '#C4B5FD'
+        ];
+
+        // ===================== 1. PROGRAM BAR =====================
+        new Chart(document.getElementById('programBar'), {
+            type: 'bar',
+            data: {
+                labels: ['MBA', 'MCA', 'BCA', 'BA', 'MSc Math', 'BBA', 'MA English', 'MA Pol.Sc'],
+                datasets: [{
+                    label: 'Users',
+                    data: [693, 421, 314, 144, 138, 120, 45, 29],
+                    backgroundColor: programColors.slice(0, 8),
+                    borderRadius: 10,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.raw} users`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 2. PROGRAM DOUGHNUT =====================
+        new Chart(document.getElementById('programDoughnut'), {
+            type: 'doughnut',
+            data: {
+                labels: ['MBA', 'MCA', 'BCA', 'BA', 'MSc Math', 'BBA', 'Others'],
+                datasets: [{
+                    data: [693, 421, 314, 144, 138, 120, 163],
+                    backgroundColor: programColors.slice(0, 7),
+                    borderWidth: 2,
+                    borderColor: '#1E293B',
+                    hoverBorderWidth: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.label}: ${ctx.raw} (${((ctx.raw / 1993) * 100).toFixed(1)}%)`
+                        }
+                    }
+                }
+            }
+        });
+
+        // ===================== 3. SEMESTER TOTAL BAR =====================
+        new Chart(document.getElementById('semTotalBar'), {
+            type: 'bar',
+            data: {
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                datasets: [{
+                    label: 'Total Users',
+                    data: [296, 678, 821, 98, 40, 60],
+                    backgroundColor: ['#34D399', '#10B981', '#059669', '#F59E0B', '#FB923C', '#EF4444'],
+                    borderRadius: 10,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 4. SEMESTER GROUPED BAR =====================
+        new Chart(document.getElementById('semGroupedBar'), {
+            type: 'bar',
+            data: {
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                datasets: [
+                    {
+                        label: 'MBA',
+                        data: [96, 162, 380, 55, 0, 0],
+                        backgroundColor: '#6C3AF5', borderRadius: 6, borderSkipped: false,
+                    },
+                    {
+                        label: 'MCA',
+                        data: [55, 165, 185, 16, 0, 0],
+                        backgroundColor: '#06B6D4', borderRadius: 6, borderSkipped: false,
+                    },
+                    {
+                        label: 'BCA',
+                        data: [45, 114, 87, 4, 26, 38],
+                        backgroundColor: '#10B981', borderRadius: 6, borderSkipped: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, pointStyleWidth: 10, padding: 14 } }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 5. SEMESTER RADAR =====================
+        new Chart(document.getElementById('semRadar'), {
+            type: 'radar',
+            data: {
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                datasets: [
+                    {
+                        label: 'MBA', data: [96, 162, 380, 55, 0, 0],
+                        borderColor: '#6C3AF5', backgroundColor: 'rgba(108,58,245,0.15)',
+                        pointBackgroundColor: '#6C3AF5', borderWidth: 2, pointRadius: 4,
+                    },
+                    {
+                        label: 'MCA', data: [55, 165, 185, 16, 0, 0],
+                        borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.15)',
+                        pointBackgroundColor: '#06B6D4', borderWidth: 2, pointRadius: 4,
+                    },
+                    {
+                        label: 'BCA', data: [45, 114, 87, 4, 26, 38],
+                        borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.15)',
+                        pointBackgroundColor: '#10B981', borderWidth: 2, pointRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        grid: { color: 'rgba(51,65,85,0.7)' },
+                        angleLines: { color: 'rgba(51,65,85,0.7)' },
+                        pointLabels: { color: '#94A3B8', font: { size: 12 } },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, pointStyleWidth: 10, padding: 14 } }
+                }
+            }
+        });
+
+        // ===================== 6. SESSION - MBA =====================
+        new Chart(document.getElementById('sessionMBA'), {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023 (Feb)', '2024 (Jan)', '2024 (Feb)', '2025 (Jan)', '2025 (Feb)'],
+                datasets: [{
+                    label: 'MBA Users',
+                    data: [1, 55, 385, 65, 252, 66],
+                    borderColor: '#6C3AF5',
+                    backgroundColor: 'rgba(108,58,245,0.12)',
+                    fill: true, tension: 0.4,
+                    pointBackgroundColor: '#6C3AF5', pointRadius: 5, pointHoverRadius: 8,
+                    borderWidth: 2.5,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 7. SESSION - MCA =====================
+        new Chart(document.getElementById('sessionMCA'), {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2023 (Feb)', '2024 (Jan)', '2024 (Feb)', '2025 (Jan)', '2025 (Feb)'],
+                datasets: [{
+                    label: 'MCA Users',
+                    data: [2, 3, 12, 163, 24, 182, 35],
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    fill: true, tension: 0.4,
+                    pointBackgroundColor: '#10B981', pointRadius: 5, pointHoverRadius: 8,
+                    borderWidth: 2.5,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 8. SESSION - BCA =====================
+        new Chart(document.getElementById('sessionBCA'), {
+            type: 'bar',
+            data: {
+                labels: ['2022 (Jan)', '2022 (Feb)', '2023 (Jan)', '2023 (Feb)', '2024 (Jan)', '2024 (Feb)', '2025 (Jan)', '2025 (Feb)'],
+                datasets: [{
+                    label: 'BCA Users',
+                    data: [6, 9, 31, 25, 76, 11, 128, 28],
+                    backgroundColor: '#F59E0B',
+                    borderRadius: 8, borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 9. SESSION STACKED =====================
+        new Chart(document.getElementById('sessionStacked'), {
+            type: 'bar',
+            data: {
+                labels: ['2022', '2023', '2024', '2025'],
+                datasets: [
+                    {
+                        label: 'MBA', data: [1, 55, 450, 318],
+                        backgroundColor: '#6C3AF5', borderRadius: 4, borderSkipped: false,
+                    },
+                    {
+                        label: 'MCA', data: [2, 15, 187, 217],
+                        backgroundColor: '#06B6D4', borderRadius: 4, borderSkipped: false,
+                    },
+                    {
+                        label: 'BCA', data: [15, 56, 87, 156],
+                        backgroundColor: '#10B981', borderRadius: 4, borderSkipped: false,
+                    },
+                    {
+                        label: 'BA', data: [4, 26, 45, 68],
+                        backgroundColor: '#F59E0B', borderRadius: 4, borderSkipped: false,
+                    },
+                    {
+                        label: 'Others', data: [0, 14, 84, 132],
+                        backgroundColor: '#94A3B8', borderRadius: 4, borderSkipped: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, pointStyleWidth: 10, padding: 12 } }
+                },
+                scales: {
+                    x: { stacked: true, grid: { color: 'rgba(51,65,85,0.5)' } },
+                    y: { stacked: true, grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        // ===================== 10. COURSE BAR =====================
+        const courseData = [
+            ['ECAP446', 'DATA WAREHOUSING & DATA MINING', 'MCA', 241],
+            ['ECAP444', 'OOP USING C++', 'MCA', 156],
+            ['ECAP448', 'LINUX & SHELL SCRIPTING', 'MCA', 137],
+            ['EMKT527', 'CUSTOMER RELATIONSHIP MGMT', 'MBA', 114],
+            ['EMKT529', 'CONSUMER BEHAVIOUR', 'MBA', 110],
+            ['EMGN571', 'CORP. STRATEGY & ENTREPRENEURSHIP', 'MBA', 90],
+            ['EBSL101', 'BUSINESS LAW', 'BA', 58],
+            ['EMGN581', 'ORG. BEHAVIOUR & HR DYNAMICS', 'MBA', 56],
+            ['EMGN578', 'INTERNATIONAL BUSINESS ENV.', 'MBA', 54],
+            ['EENG539', 'ACADEMIC ENGLISH', 'MBA', 51],
+        ];
+
+        new Chart(document.getElementById('courseBar'), {
+            type: 'bar',
+            data: {
+                labels: courseData.map(c => c[1].substring(0, 30)),
+                datasets: [{
+                    label: 'Log Count',
+                    data: courseData.map(c => c[3]),
+                    backgroundColor: [
+                        '#6C3AF5', '#7C3AED', '#8B5CF6', '#A78BFA', '#C4B5FD',
+                        '#06B6D4', '#0EA5E9', '#38BDF8', '#67E8F9', '#BAE6FD'
+                    ],
+                    borderRadius: 10, borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+
+        // ===================== FEEDBACK SCORECARD =====================
+        new Chart(document.getElementById('feedbackChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Negative', 'Not Given'],
+                datasets: [{
+                    data: [372, 1140, 22738],
+                    backgroundColor: [
+                        '#10B981',
+                        '#EF4444',
+                        '#64748B'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#1E293B',
+                    hoverBorderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyleWidth: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.label}: ${ctx.raw}`
+                        }
+                    }
+                }
+            }
+        });
+
+        // ===================== COURSE TABLE =====================
+        const tbody = document.getElementById('courseTableBody');
+        const maxLog = courseData[0][3];
+        courseData.forEach((c, i) => {
+            const pct = ((c[3] / maxLog) * 100).toFixed(0);
+            const badgeClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            tbody.innerHTML += `
+            <tr>
+              <td><span class="rank-badge ${badgeClass}">${i + 1}</span></td>
+              <td><code style="background:rgba(108,58,245,0.12);padding:3px 8px;border-radius:6px;font-size:12px;color:#A78BFA">${c[0]}</code></td>
+              <td style="font-weight:600;color:#F1F5F9">${c[1]}</td>
+              <td><span style="background:rgba(6,182,212,0.12);padding:3px 10px;border-radius:20px;font-size:12px;color:#67E8F9">${c[2]}</span></td>
+              <td><strong style="color:#F1F5F9">${c[3]}</strong></td>
+              <td>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar" style="width:${pct}%"></div>
+                  <span style="font-size:12px;color:#94A3B8">${pct}%</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        // ===================== SCROLL ANIMATION =====================
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
